@@ -9,6 +9,8 @@ GAME_OVER_TIMER = 1 -- How much time must pass before you can reset after a game
 
 PIPE_HOZWIDTH = 3 -- actual pipe width.
 
+ALLOWED_KEYS = {keys.w, keys.up, keys.space,keys.b}
+
 dbg = false -- debug 
 
 local pipes = {}
@@ -34,6 +36,21 @@ function writeAt(str,x,y)
     write(tostring(str))
 end
 
+function tablehas(tble,value)
+    has = false
+    for i,v in ipairs(tble) do
+        if v == value then
+            has = true
+            break
+        end
+    end
+    return has
+end
+
+function isColorless()
+    return (not term.isColor()) or forceBasic
+end
+
 function reset()
     gameOver = false
     paused = false
@@ -47,12 +64,12 @@ function reset()
 end
 
 function drawBG()
-    paintutils.drawFilledBox(1,1,WIDTH,HEIGHT,conf_darkmode and colors.black or colors.cyan)
+    paintutils.drawFilledBox(1,1,WIDTH,HEIGHT,(darkmode or isColorless()) and colors.black or colors.cyan)
 end
 
 function drawPlayer()
     if playerY < 0 or playerY > HEIGHT then return end
-    paintutils.drawPixel(playerX,playerY,colors.red)
+    paintutils.drawPixel(playerX,playerY,not isColorless() and colors.red or colors.white)
 end
 
 function drawGround()
@@ -77,7 +94,7 @@ function drawText()
         writeAt("Score: "..tostring(score),WIDTH/2-4,HEIGHT/2)
     end
     if canReset and gameOver then
-        writeAt("Tap to restart.", WIDTH/2-7,HEIGHT/2+1)
+        writeAt("Tap to restart.", WIDTH/2-7,HEIGHT/2+2)
     end
 
     if justStarted then
@@ -139,6 +156,22 @@ function inputMouse()
     end
 end
 
+function inputKeyboard()
+    while true do
+        local event, key, isHeld = os.pullEvent("key")
+        --print(key)
+        if tablehas(ALLOWED_KEYS,key) and not isHeld then
+            if not paused and not gameOver then
+                playerVelocity = JUMP_STRENGTH*-1
+            end
+            justStarted = false
+            if gameOver and canReset then
+                reset()
+            end
+        end
+    end
+end
+
 function physics()
     for i,v in ipairs(pipes) do
         if not gameOver then
@@ -187,6 +220,6 @@ function update()
     end    
 end
 
-input = term.isColor() and inputMouse or inputKeyboard
+--input = term.isColor() and inputMouse or inputKeyboard -- im now allowing both input methods at once.
 
-parallel.waitForAll(update, input, pipeCreator)
+parallel.waitForAll(update, inputMouse, inputKeyboard, pipeCreator)
