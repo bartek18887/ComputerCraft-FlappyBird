@@ -7,3 +7,5 @@ To Download onto your minecraft computer run:
 wget https://github.com/bartek18887/ComputerCraft-FlappyBird/raw/main/main.lua flappybird.lua
 ```
 and it should download. after it downloads, run it by typing `flappybird`
+
+Controls using the mouse or the spacebar, up arrow, w key or b key.
